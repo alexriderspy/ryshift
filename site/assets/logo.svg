@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Ryshift</title>
+  <defs>
+    <!-- Rynovi purple to indigo -->
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c6cf0" />
+      <stop offset="1" stop-color="#4b55d8" />
+    </linearGradient>
+    <!-- Specular glass rim -->
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95" />
+      <stop offset="0.35" stop-color="#fff" stop-opacity="0.2" />
+      <stop offset="0.7" stop-color="#fff" stop-opacity="0.1" />
+      <stop offset="1" stop-color="#fff" stop-opacity="0.75" />
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.38" cy="0.2" r="0.8">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.38" />
+      <stop offset="1" stop-color="#fff" stop-opacity="0.08" />
+    </radialGradient>
+  </defs>
+
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#tile)" />
+
+  <!-- Glass disk with six slice dividers -->
+  <circle cx="512" cy="512" r="330" fill="url(#sheen)" />
+  <g stroke="#fff" stroke-opacity="0.45" stroke-width="5">
+    <line x1="512" y1="397" x2="512" y2="182" transform="rotate(30 512 512)" />
+    <line x1="512" y1="397" x2="512" y2="182" transform="rotate(90 512 512)" />
+    <line x1="512" y1="397" x2="512" y2="182" transform="rotate(150 512 512)" />
+    <line x1="512" y1="397" x2="512" y2="182" transform="rotate(210 512 512)" />
+    <line x1="512" y1="397" x2="512" y2="182" transform="rotate(270 512 512)" />
+    <line x1="512" y1="397" x2="512" y2="182" transform="rotate(330 512 512)" />
+  </g>
+
+  <!-- The chosen slice (top), in Rynovi cream -->
+  <path d="M 347 226.2 A 330 330 0 0 1 677 226.2 L 569.5 412.4 A 115 115 0 0 0 454.5 412.4 Z" fill="#fff8f1" />
+
+  <circle cx="512" cy="512" r="330" fill="none" stroke="url(#rim)" stroke-width="10" />
+
+  <!-- Hub with the Shift key arrow -->
+  <circle cx="512" cy="512" r="115" fill="#fff8f1" />
+  <circle cx="512" cy="512" r="115" fill="none" stroke="url(#rim)" stroke-width="6" />
+  <path d="M 512 446 L 572 512 L 540 512 L 540 568 L 484 568 L 484 512 L 452 512 Z"
+        fill="none" stroke="#6f5be0" stroke-width="14" stroke-linejoin="round" />
+</svg>

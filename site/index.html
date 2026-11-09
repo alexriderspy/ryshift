@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ryshift — drag a file, press Shift, drop it on a wheel</title>
+<meta name="description" content="Drag any file, hold Shift, and a wheel of options opens under your cursor. Convert, compress, crop, redact — offline, on macOS, Windows and Linux. Free and open source." />
+<meta property="og:title" content="Ryshift — drag a file, press Shift, drop it on a wheel" />
+<meta property="og:description" content="The file converter that lives under your cursor. Offline, no account, free and open source for macOS, Windows and Linux." />
+<meta property="og:image" content="https://alexriderspy.github.io/ryshift/assets/logo.svg" />
+<meta property="og:url" content="https://alexriderspy.github.io/ryshift/" />
+<link rel="canonical" href="https://alexriderspy.github.io/ryshift/" />
+<meta name="theme-color" content="#f6efe4" />
+<link rel="icon" href="assets/logo.svg" />
+<style>
+@font-face {
+  font-family: "Inter Tight";
+  src: url("assets/InterTight.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root {
+  --page: #f6efe4;
+  --cream: #fff8f1;
+  --ink: #17330f;
+  --muted: #5c6b55;
+  --line: #e9e1d4;
+  --purple: #6f5be0;
+  --purple-deep: #4b55d8;
+  --indigo: #7c6cf0;
+  --card: #ffffff;
+  --radius: 20px;
+  --shadow: 0 1px 0 var(--line), 0 12px 34px rgba(23, 51, 15, 0.08);
+  --maxw: 1160px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 500 16px/1.55 "Inter Tight", -apple-system, "Segoe UI Variable", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { letter-spacing: -0.03em; margin: 0; }
+h1 { font-size: clamp(38px, 6.2vw, 74px); font-weight: 800; line-height: 1.02; }
+h2 { font-size: clamp(28px, 3.6vw, 42px); font-weight: 800; line-height: 1.08; }
+h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.eyebrow {
+  font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--purple);
+}
+.lead { color: var(--muted); font-size: clamp(17px, 1.6vw, 20px); }
+
+/* ---------- nav ---------- */
+header.nav {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(246, 239, 228, 0.78);
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+header.nav.stuck { border-bottom-color: var(--line); box-shadow: 0 6px 24px rgba(23,51,15,.05); }
+.nav-in { display: flex; align-items: center; gap: 14px; height: 66px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; text-decoration: none; letter-spacing: -0.02em; }
+.brand img { width: 30px; height: 30px; border-radius: 8px; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; font-size: 14.5px; font-weight: 600; }
+.nav-links a { text-decoration: none; color: var(--muted); }
+.nav-links a:hover { color: var(--ink); }
+.nav-cta { display: flex; gap: 10px; margin-left: 10px; }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 12px; padding: 11px 18px; font-size: 14.5px; font-weight: 700;
+  text-decoration: none; border: 1px solid var(--line); background: var(--cream);
+  color: var(--ink); cursor: pointer; transition: transform .12s ease, box-shadow .16s ease, background .16s ease;
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(23,51,15,.1); }
+.btn.primary {
+  background: linear-gradient(135deg, var(--indigo), var(--purple-deep));
+  border-color: transparent; color: #fff;
+  box-shadow: 0 10px 26px rgba(95, 84, 224, .3), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.btn.primary:hover { box-shadow: 0 14px 34px rgba(95, 84, 224, .4), inset 0 1px 0 rgba(255,255,255,.35); }
+.btn.ghost { background: transparent; }
+.btn svg { width: 16px; height: 16px; }
+
+/* ---------- hero ---------- */
+.hero { position: relative; padding: 54px 0 20px; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: -20% -10% auto -10%; height: 720px; z-index: -1;
+  background:
+    radial-gradient(38% 46% at 78% 22%, rgba(124,108,240,.30), transparent 70%),
+    radial-gradient(34% 40% at 14% 8%, rgba(255,211,110,.42), transparent 72%),
+    radial-gradient(40% 42% at 52% 62%, rgba(239,143,176,.24), transparent 72%);
+  filter: blur(6px);
+}
+.hero-grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: 30px; align-items: center; }
+.pill {
+  display: inline-flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700;
+  background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 8px;
+  box-shadow: 0 1px 0 var(--line);
+}
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #3f8e2e; box-shadow: 0 0 0 3px rgba(63,142,46,.15); }
+.pill a { color: var(--purple); text-decoration: none; }
+.hero h1 { margin: 18px 0 0; }
+.hero h1 em { font-style: normal; background: linear-gradient(135deg, var(--indigo), var(--purple-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.lead { margin: 18px 0 26px; max-width: 33ch; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.hero-note { margin: 16px 0 0; font-size: 13.5px; color: var(--muted); }
+.hero-note code { background: rgba(23,51,15,.06); padding: 2px 6px; border-radius: 6px; font-size: 12.5px; }
+
+/* wheel stage */
+.stage {
+  position: relative; aspect-ratio: 1; max-width: 520px; margin-left: auto; width: 100%;
+  border-radius: 32px; overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 22%, #ffd36e 0 17%, transparent 18%),
+    radial-gradient(circle at 84% 80%, #8fc3ef 0 21%, transparent 22%),
+    linear-gradient(135deg, #f3b13d, #ef8fb0 55%, #b9a6f2);
+  box-shadow: 0 30px 70px -20px rgba(23,51,15,.45), 0 2px 0 rgba(255,255,255,.5) inset;
+}
+.stage .grain { position: absolute; inset: 0; opacity: .1; background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 4px 4px; }
+.stage .filecard {
+  position: absolute; left: 12px; top: 62%; width: 62px; text-align: center;
+  color: #fff; font-size: 10.5px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.45);
+  transition: transform .5s ease, opacity .5s ease;
+}
+.stage .filecard .doc {
+  width: 50px; height: 62px; margin: 0 auto 6px; border-radius: 5px; background: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,.28); position: relative;
+}
+.stage .filecard .doc::after {
+  content: "PDF"; position: absolute; inset: auto 0 8px; font-size: 9px; color: #b4446c;
+  font-weight: 800; letter-spacing: .08em;
+}
+.stage .filecard .doc::before {
+  content: ""; position: absolute; right: 0; top: 0; border: 7px solid #efe6d8; border-left-color: #fff; border-bottom-color: #fff;
+}
+.wheel { position: absolute; inset: 8%; }
+.wheel .disk {
+  position: absolute; inset: 5%; border-radius: 50%;
+  background: rgba(255,248,241,.30);
+  backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.75), 0 18px 40px rgba(0,0,0,.22);
+}
+.wheel svg { position: absolute; inset: 0; overflow: visible; }
+.petal { fill: #fff; stroke: #fff; stroke-width: 16; stroke-linejoin: round; opacity: .58; transition: fill .18s ease, stroke .18s ease, opacity .18s ease; cursor: pointer; }
+.petal.hot { fill: var(--purple); stroke: var(--purple); opacity: .96; }
+.lbl { font: 800 10px "Inter Tight", sans-serif; letter-spacing: .08em; fill: var(--ink); pointer-events: none; }
+.lbl.hot { fill: var(--cream); }
+.ico { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.ico.hot { stroke: var(--cream); }
+.hub { fill: rgba(255,255,255,.80); }
+.rim { fill: none; stroke: url(#rimG); stroke-width: 1.5; }
+.hubt { font: 800 12.5px "Inter Tight", sans-serif; fill: var(--ink); pointer-events: none; }
+.hubs { font: 800 8.5px "Inter Tight", sans-serif; letter-spacing: .12em; fill: var(--muted); pointer-events: none; }
+.stage .result {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.9);
+  background: #2f6fe0; color: #fff; font-size: 12px; font-weight: 800; padding: 5px 11px;
+  border-radius: 7px; white-space: nowrap; opacity: 0; pointer-events: none;
+  box-shadow: 0 8px 22px rgba(47,111,224,.45); transition: opacity .25s ease, transform .25s ease;
+}
+.stage.done .result { opacity: 1; transform: translate(-50%, -190%) scale(1); }
+.stage.done .filecard { transform: translateX(-6px) rotate(-6deg); opacity: .2; }
+.stage-hint {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  background: rgba(23,51,15,.62); color: #fff8f1; font-size: 11.5px; font-weight: 700;
+  padding: 5px 12px; border-radius: 999px; backdrop-filter: blur(8px); white-space: nowrap;
+  transition: opacity .25s ease;
+}
+.stage.done .stage-hint { opacity: 0; }
+
+/* ---------- logos / facts strip ---------- */
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 46px 0 10px; }
+.fact { background: var(--cream); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+.fact b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.fact span { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+/* ---------- sections ---------- */
+section { padding: 84px 0; }
+.sec-head { max-width: 640px; margin-bottom: 34px; }
+.sec-head p { margin: 14px 0 0; }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: s; }
+.step {
+  position: relative; background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 22px 20px 24px; box-shadow: 0 1px 0 var(--line);
+}
+.step .n {
+  counter-increment: s; display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 9px; background: rgba(111,91,224,.12); color: var(--purple);
+  font-weight: 800; font-size: 13px; margin-bottom: 14px;
+}
+.step .n::before { content: counter(s); }
+.step h3 { font-size: 16px; margin-bottom: 6px; }
+.step p { margin: 0; color: var(--muted); font-size: 14px; }
+.step kbd {
+  font: 800 11px "Inter Tight", sans-serif; background: #fff; border: 1px solid var(--line);
+  border-bottom-width: 2px; border-radius: 6px; padding: 2px 6px; color: var(--ink);
+}
+
+/* wheels */
+.wheels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.wcard {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px;
+  box-shadow: var(--shadow); transition: transform .16s ease;
+}
+.wcard:hover { transform: translateY(-3px); }
+.wcard .mini { width: 100%; aspect-ratio: 1; margin-bottom: 12px; }
+.wcard .k { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--purple); }
+.wcard h3 { font-size: 16px; margin: 3px 0 6px; }
+.wcard p { margin: 0; font-size: 13px; color: var(--muted); }
+
+/* feature grid */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcard {
+  background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 24px; display: flex; flex-direction: column; gap: 10px;
+}
+.fcard .fi {
+  width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+  background: linear-gradient(135deg, rgba(124,108,240,.16), rgba(75,85,216,.1));
+  color: var(--purple); border: 1px solid rgba(111,91,224,.16);
+}
+.fcard .fi svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.fcard p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.fcard.span2 { grid-column: span 2; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.chip {
+  font-size: 12px; font-weight: 700; background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; padding: 3px 8px; color: var(--ink);
+}
+.chip.on { background: var(--purple); border-color: var(--purple); color: var(--cream); }
+
+/* compare table */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 620px; }
+th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+thead th { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: #fbf6ef; }
+tbody tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; }
+.yes { color: #3f8e2e; font-weight: 800; }
+.no { color: #b4446c; font-weight: 800; }
+td.col-ry { background: rgba(111,91,224,.05); }
+
+/* install */
+.install { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+.tabs { display: flex; flex-direction: column; gap: 8px; }
+.tab {
+  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  background: var(--cream); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px;
+  font: 700 15px "Inter Tight", sans-serif; color: var(--ink); cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, transform .12s ease;
+}
+.tab:hover { transform: translateX(2px); }
+.tab[aria-selected="true"] { border-color: rgba(111,91,224,.5); background: #fff; box-shadow: 0 8px 22px rgba(111,91,224,.12); }
+.tab .os { width: 22px; height: 22px; flex: none; fill: currentColor; }
+.tab small { display: block; font-size: 12px; font-weight: 600; color: var(--muted); }
+.panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 26px 28px; box-shadow: var(--shadow); min-height: 340px;
+}
+.panel[hidden] { display: none; }
+.panel h3 { font-size: 20px; margin-bottom: 4px; }
+.panel > p { color: var(--muted); margin: 0 0 18px; font-size: 14.5px; }
+.panel ol { margin: 0 0 18px; padding-left: 20px; color: var(--muted); font-size: 14.5px; }
+.panel ol li { margin-bottom: 8px; }
+.panel ol li b { color: var(--ink); }
+.code {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #1d1b2e; color: #efeafd; border-radius: 12px; padding: 12px 14px;
+  font: 500 13px ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0 0 12px;
+  overflow-x: auto; white-space: pre;
+}
+.code button {
+  border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #efeafd;
+  border-radius: 8px; padding: 4px 10px; font: 700 11.5px "Inter Tight", sans-serif; cursor: pointer; flex: none;
+}
+.code button:hover { background: rgba(255,255,255,.16); }
+.note {
+  display: flex; gap: 10px; font-size: 13px; color: var(--muted); background: #fbf6ef;
+  border: 1px dashed var(--line); border-radius: 12px; padding: 12px 14px;
+}
+.note svg { width: 17px; height: 17px; flex: none; fill: none; stroke: var(--purple); stroke-width: 2; stroke-linecap: round; }
+
+/* cli */
+.cli {
+  background: #1d1b2e; border-radius: var(--radius); padding: 22px 24px; overflow-x: auto;
+  box-shadow: 0 24px 50px -20px rgba(29,27,46,.6);
+}
+.cli pre { margin: 0; font: 500 13.5px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace; color: #d9d3f5; }
+.cli .c { color: #8b84b8; }
+.cli .p { color: #9ee493; }
+.cli .o { color: #ffd36e; }
+
+/* faq */
+.faq { display: grid; gap: 10px; max-width: 820px; }
+details {
+  background: var(--cream); border: 1px solid var(--line); border-radius: 14px; padding: 0 18px;
+}
+details[open] { background: #fff; box-shadow: var(--shadow); }
+summary {
+  cursor: pointer; list-style: none; padding: 16px 0; font-weight: 700; font-size: 15.5px;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--purple); font-weight: 800; font-size: 20px; line-height: 1; }
+details[open] summary::after { content: "–"; }
+details p { margin: 0 0 16px; color: var(--muted); font-size: 14.5px; }
+
+/* final cta */
+.cta {
+  position: relative; overflow: hidden; border-radius: 28px; padding: 56px 40px; text-align: center;
+  background: linear-gradient(135deg, var(--indigo), var(--purple-deep)); color: #fff;
+  box-shadow: 0 30px 70px -28px rgba(95,84,224,.7);
+}
+.cta::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(50% 60% at 20% 10%, rgba(255,255,255,.28), transparent 70%),
+              radial-gradient(40% 50% at 85% 90%, rgba(255,211,110,.35), transparent 70%);
+  pointer-events: none;
+}
+.cta h2 { color: #fff; position: relative; }
+.cta p { color: rgba(255,248,241,.85); max-width: 48ch; margin: 14px auto 26px; position: relative; }
+.cta .row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; }
+.cta .btn { background: #fff8f1; color: var(--ink); border-color: transparent; }
+.cta .btn.ghost { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
+
+/* footer */
+footer { padding: 54px 0 40px; border-top: 1px solid var(--line); margin-top: 84px; }
+.foot { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; justify-content: space-between; font-size: 14px; color: var(--muted); }
+.foot-links { display: flex; flex-wrap: wrap; gap: 20px; }
+.foot a { text-decoration: none; color: var(--muted); }
+.foot a:hover { color: var(--ink); }
+
+/* reveal on scroll */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+
+@media (max-width: 980px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 34px; }
+  .stage { margin: 0 auto; max-width: 440px; }
+  .wheels { grid-template-columns: repeat(2, 1fr); }
+  .wcard { display: grid; grid-template-columns: 96px 1fr; gap: 4px 14px; align-items: center; padding: 14px; }
+  .wcard .mini { margin: 0; grid-row: span 3; }
+  .wcard .k, .wcard h3, .wcard p { grid-column: 2; }
+  .hero p.lead { max-width: none; }
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  .steps { grid-template-columns: repeat(2, 1fr); }
+  .wheels { grid-template-columns: repeat(3, 1fr); }
+  .features { grid-template-columns: repeat(2, 1fr); }
+  .fcard.span2 { grid-column: span 2; }
+  .install { grid-template-columns: 1fr; }
+  .tabs { flex-direction: row; flex-wrap: wrap; }
+  .tab { flex: 1 1 140px; }
+  .nav-links { display: none; }
+}
+@media (max-width: 620px) {
+  section { padding: 62px 0; }
+  .steps, .features { grid-template-columns: 1fr; }
+  .wheels { grid-template-columns: 1fr; }
+  .fcard.span2 { grid-column: span 1; }
+  .cta { padding: 42px 22px; }
+  .nav-cta .btn:not(.primary) { display: none; }
+  .panel { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><img src="assets/logo.svg" alt="" />Ryshift</a>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#wheels">The wheels</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/alexriderspy/ryshift/blob/main/README.md" target="_blank" rel="noopener">README</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn ghost" href="https://github.com/alexriderspy/ryshift" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn primary" href="https://github.com/alexriderspy/ryshift/releases/latest" target="_blank" rel="noopener">Download</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="pill"><span class="dot"></span> free &amp; open source · <a href="https://github.com/alexriderspy/ryshift/stargazers" target="_blank" rel="noopener" id="stars-link">★ 33 stars</a></span>
+        <h1>Drag a file.<br />Press <em>Shift</em>.<br />Pick a slice.</h1>
+        <p class="lead">A wheel of options opens under your cursor. Drop your file on one and the result lands next to the original — converted, compressed, cropped, redacted. No window to find, no upload, no account.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="https://github.com/alexriderspy/ryshift/releases/latest" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+            Download for free
+          </a>
+          <a class="btn" href="https://github.com/alexriderspy/ryshift" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.55v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.04 1.78 2.72 1.27 3.38.97.1-.75.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .3.2.66.8.55A11.5 11.5 0 0 0 23.5 12A11.5 11.5 0 0 0 12 .5z"/></svg>
+            Star on GitHub
+          </a>
+        </div>
+        <p class="hero-note">macOS 12+ · Windows 10/11 · Ubuntu · MIT licensed · no account, no uploads, no telemetry</p>
+      </div>
+
+      <!-- animated wheel -->
+      <div class="stage" id="stage" aria-label="Ryshift wheel demo">
+        <div class="grain"></div>
+        <div class="filecard"><div class="doc"></div>Page 001.pdf</div>
+        <div class="wheel">
+          <div class="disk"></div>
+          <svg viewBox="0 0 320 320" id="heroWheel" role="img" aria-label="Convert wheel with JPG, PNG, TXT, WEBP, PDF and HEIC slices"></svg>
+        </div>
+        <div class="result" id="result">Page 001.jpg</div>
+        <div class="stage-hint" id="hint">Hover a slice — this is the real gesture</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="facts reveal">
+      <div class="fact"><b>~10 MB</b><span>Not Electron. Tauri 2 + system web view.</span></div>
+      <div class="fact"><b>100% offline</b><span>Nothing is uploaded. No telemetry, ever.</span></div>
+      <div class="fact"><b>3 systems</b><span>macOS, Windows and Ubuntu, one look.</span></div>
+      <div class="fact"><b>MIT</b><span>Open source, and the engine is a CLI too.</span></div>
+    </div>
+  </div>
+
+  <!-- ============ HOW ============ -->
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">How it works</span>
+        <h2>One gesture, four seconds, zero windows.</h2>
+        <p class="lead">The whole app is a single interaction. Learn it once and every conversion you do afterwards is faster than opening Preview.</p>
+      </div>
+      <div class="steps reveal">
+        <div class="step"><div class="n"></div><h3>Start dragging</h3><p>Any file, from the desktop, Finder, Explorer, Files, or a browser download.</p></div>
+        <div class="step"><div class="n"></div><h3>Press <kbd>Shift</kbd></h3><p>The wheel fades in under your cursor. The current wheel and the file size sit in the hub.</p></div>
+        <div class="step"><div class="n"></div><h3>Hover a slice</h3><p>It lights up purple and the cursor shows a green <b>+</b>. Tap Shift again to switch wheels.</p></div>
+        <div class="step"><div class="n"></div><h3>Drop</h3><p>The result is saved beside the original as <code>Page 001.jpg</code>. The original is never touched.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHEELS ============ -->
+  <section id="wheels" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Five wheels</span>
+        <h2>Each wheel holds eight slices, so nothing is more than one flick away.</h2>
+        <p class="lead">Shift cycles through Convert, Tools and AI. Hold Option / Alt instead for Share and Organise. Slices you never use can be hidden, and the rest reordered.</p>
+      </div>
+      <div class="wheels reveal" id="wheelsGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section id="features" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">What it does</span>
+        <h2>A converter that grew up into a toolkit.</h2>
+        <p class="lead">Every slice is one small Rust module: same result on every system, and adding a format is one file plus a test.</p>
+      </div>
+      <div class="features reveal">
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l6-6 4 4 3-3 4 4"/></svg></div>
+          <h3>Convert anything</h3>
+          <p>Images between PNG, JPG, WEBP, HEIC, TIFF, BMP, GIF and PDF. PDFs into images or text. CSV ↔ XLSX ↔ JSON. Video and audio too.</p>
+          <div class="chips"><span class="chip on">PNG</span><span class="chip on">JPG</span><span class="chip">HEIC</span><span class="chip">WEBP</span><span class="chip">PDF</span><span class="chip">TXT</span><span class="chip">MP4</span><span class="chip">MP3</span></div>
+        </div>
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M10 14l-6 6"/><path d="M14 10l6-6"/></svg></div>
+          <h3>Compress and strip</h3>
+          <p>Hit a size limit for email, WhatsApp or Discord in one drop. Drop the metadata in the same gesture, so the photo you send carries no GPS.</p>
+        </div>
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></div>
+          <h3>Crop, rotate, edit</h3>
+          <p>Ratio presets for Instagram, Stories, YouTube thumbnails and LinkedIn. Adjust colours, add a gradient background, or annotate.</p>
+        </div>
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.4"/><path d="M4 20L20 4"/></svg></div>
+          <h3>Redact on-device</h3>
+          <p>Draw boxes, or let <b>Auto</b> blur the emails, phone numbers and faces it finds. Nothing leaves your machine to do it.</p>
+        </div>
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+          <h3>Batch by dragging</h3>
+          <p>Drag several files at once and the action runs on all of them. Results keep the names they had, with Finder-style <code> 2</code>, <code> 3</code> on clashes.</p>
+        </div>
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.4 5.8.5-4.4 3.8 1.3 5.7L12 15.6 7.1 18.4l1.3-5.7L4 8.9l5.8-.5z"/></svg></div>
+          <h3>On-device AI</h3>
+          <p>Copy text out of an image, summarise a PDF, transcribe audio to SRT. Apple Foundation Models where they exist, otherwise a small local model you opt into.</p>
+        </div>
+        <div class="fcard span2">
+          <div class="fi"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/></svg></div>
+          <h3>The engine is also a CLI</h3>
+          <p>The Rust engine is a plain library plus a command line, so anything you can do with the wheel you can do in a script — and it's testable without any UI.</p>
+          <div class="cli" style="margin-top:8px">
+<pre><span class="c">$</span> ryshift convert photo.heic --to jpg
+<span class="p">✓</span> photo.jpg <span class="c">· 2.1 MB → 480 KB</span>
+<span class="c">$</span> ryshift convert report.pdf --to jpg --pages 1-3
+<span class="p">✓</span> report-1.jpg  report-2.jpg  report-3.jpg</pre>
+          </div>
+        </div>
+        <div class="fcard">
+          <div class="fi"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg></div>
+          <h3>Your own slices</h3>
+          <p>Pin a shell command, a Shortcut or a recipe like <i>HEIC → JPG → resize 1080 → strip metadata</i> and it appears as a slice for the file types you pick.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Why not just use a converter site</span>
+        <h2>Nothing to sign up for, nothing to upload.</h2>
+      </div>
+      <div class="table-wrap reveal">
+        <table>
+          <thead>
+            <tr><th></th><th class="col-ry">Ryshift</th><th>Converter websites</th><th>Desktop apps</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Your file leaves your machine</td><td class="col-ry"><span class="yes">Never</span></td><td><span class="no">Always</span></td><td><span class="yes">Never</span></td></tr>
+            <tr><td>Steps to convert one file</td><td class="col-ry"><span class="yes">1 gesture</span></td><td>Open tab, upload, wait, download</td><td>Open app, import, choose, export</td></tr>
+            <tr><td>Works with no internet</td><td class="col-ry"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td></tr>
+            <tr><td>Batch by dragging many files</td><td class="col-ry"><span class="yes">Yes</span></td><td>Upload limits, queues</td><td>Usually</td></tr>
+            <tr><td>Size on disk</td><td class="col-ry"><b>~10 MB</b></td><td>n/a</td><td>150–400 MB</td></tr>
+            <tr><td>Account, ads, telemetry</td><td class="col-ry"><span class="yes">None</span></td><td>Ads, cookies</td><td>Varies, often paid</td></tr>
+            <tr><td>Source you can read</td><td class="col-ry"><span class="yes">MIT</span></td><td><span class="no">Closed</span></td><td>Rarely</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INSTALL ============ -->
+  <section id="install" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Install</span>
+        <h2>About a minute, on any of the three.</h2>
+        <p class="lead">Builds aren't notarised or signed yet, so each system shows one warning the first time. Here is exactly how to get past it.</p>
+      </div>
+      <div class="install reveal">
+        <div class="tabs" role="tablist" aria-label="Operating system">
+          <button class="tab" role="tab" aria-selected="true" aria-controls="p-mac" id="t-mac">
+            <svg class="os" viewBox="0 0 24 24"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.9-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1.1 2.8-2.2c.9-1.3 1.2-2.5 1.2-2.6 0 0-2.4-.9-2.4-3.4zM14.1 5.8c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3z"/></svg>
+            <span>macOS<small>Apple Silicon &amp; Intel</small></span>
+          </button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="p-win" id="t-win">
+            <svg class="os" viewBox="0 0 24 24"><path d="M3 5.6l7.3-1v7.1H3zM11.3 4.5L21 3v8.7h-9.7zM3 12.7h7.3v7.1L3 18.4zM11.3 12.7H21V21l-9.7-1.3z"/></svg>
+            <span>Windows<small>10 &amp; 11</small></span>
+          </button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="p-lin" id="t-lin">
+            <svg class="os" viewBox="0 0 24 24"><path d="M12 2c-2.2 0-3.6 1.7-3.6 3.9 0 1.5-.2 2.4-.9 3.6C6.3 11.2 5 13.3 5 15.4c0 1.2.5 2 1.3 2.5-.4 1.1-1.3 2-1.3 2.6 0 .6.5 1 1.3 1 .9 0 1.7-.6 2.4-1.3.9.3 2 .5 3.3.5s2.4-.2 3.3-.5c.7.7 1.5 1.3 2.4 1.3.8 0 1.3-.4 1.3-1 0-.6-.9-1.5-1.3-2.6.8-.5 1.3-1.3 1.3-2.5 0-2.1-1.3-4.2-2.5-5.9-.7-1.2-.9-2.1-.9-3.6C15.6 3.7 14.2 2 12 2zm-1.6 4.1c.4 0 .7.4.7.9s-.3.9-.7.9-.7-.4-.7-.9.3-.9.7-.9zm3.2 0c.4 0 .7.4.7.9s-.3.9-.7.9-.7-.4-.7-.9.3-.9.7-.9zm-1.6 2c.8 0 1.6.5 1.6.8 0 .2-.7.8-1.6.8s-1.6-.6-1.6-.8c0-.3.8-.8 1.6-.8z"/></svg>
+            <span>Ubuntu<small>.deb, AppImage, Wayland</small></span>
+          </button>
+        </div>
+
+        <div>
+          <div class="panel" role="tabpanel" id="p-mac" aria-labelledby="t-mac">
+            <h3>macOS 12 or later</h3>
+            <p>Apple Silicon: <b>Ryshift_…_aarch64.dmg</b> · Intel: <b>Ryshift_…_x64.dmg</b></p>
+            <ol>
+              <li>Open the DMG and drag <b>Ryshift</b> into <b>Applications</b>.</li>
+              <li>The first time, <b>right-click Ryshift → Open</b>, then <b>Open</b> again. A normal double-click is blocked once because builds aren't notarised yet.</li>
+              <li>Ryshift appears in the menu bar. The first time you press <kbd>⌥ Space</kbd>, allow it to control Finder.</li>
+            </ol>
+            <div class="note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg> Dragging files needs no permission at all — Ryshift only reads global state. Finder control is asked for once, the first time you use the shortcut.</div>
+          </div>
+
+          <div class="panel" role="tabpanel" id="p-win" aria-labelledby="t-win" hidden>
+            <h3>Windows 10 &amp; 11</h3>
+            <p>Download <b>Ryshift_…_x64-setup.exe</b> or the <b>.msi</b>.</p>
+            <ol>
+              <li>Run the installer. If SmartScreen says <i>"Windows protected your PC"</i>, click <b>More info → Run anyway</b> — builds aren't signed yet.</li>
+              <li>Ryshift starts in the system tray.</li>
+              <li>Select files in Explorer and press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Space</kbd>, or drag and hold Shift.</li>
+            </ol>
+            <div class="note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg> No admin rights needed. The wheel reads your Explorer selection through the Shell API, so there's no prompt to approve.</div>
+          </div>
+
+          <div class="panel" role="tabpanel" id="p-lin" aria-labelledby="t-lin" hidden>
+            <h3>Ubuntu 22.04+</h3>
+            <p>Download <b>ryshift_…_amd64.deb</b> or <b>Ryshift_…_amd64.AppImage</b>.</p>
+            <ol>
+              <li>Install the deb, or <code>chmod +x</code> the AppImage and run it.</li>
+              <li>On the default <b>Wayland</b> session, also install the GNOME extension from the same release, then log out and back in.</li>
+              <li>Turn on <b>Ryshift</b> in the Extensions app. The app itself must be running too.</li>
+            </ol>
+            <div class="code">sudo apt install ./ryshift_*_amd64.deb <button data-copy>Copy</button></div>
+            <div class="code">scripts/pack-gnome-extension.sh
+gnome-extensions install --force dist/ryshift@alexriderspy.github.io.shell-extension.zip <button data-copy>Copy</button></div>
+            <div class="note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg> Wayland won't let an app watch the mouse or place its own windows, so a small GNOME Shell extension spots "dragging + Shift" and moves the wheel to your pointer. The file is still dropped on Ryshift's own window, so the extension never touches files. On X11 it all works without the extension.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section id="faq" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Questions</span>
+        <h2>Reasonable things to ask before installing.</h2>
+      </div>
+      <div class="faq reveal">
+        <details open>
+          <summary>Does it upload my files?</summary>
+          <p>No. Every conversion runs locally in the Rust engine on your machine. There's no account, no network call and no telemetry. The optional AI slices run on a small local model, and the only thing that ever downloads is that model (1–2 GB, opt-in) and heavy tools like ffmpeg on first use.</p>
+        </details>
+        <details>
+          <summary>What happens to my original file?</summary>
+          <p>It's never touched. The result is written next to it with a new extension — <code>Page 001.pdf</code> becomes <code>Page 001.jpg</code>. If a file with that name exists, you get <code> 2</code>, <code> 3</code> and so on, exactly like Finder.</p>
+        </details>
+        <details>
+          <summary>Can I use it without dragging?</summary>
+          <p>Yes. Select files in Finder, Explorer or Files and press <kbd>⌥ Space</kbd> on Mac or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> elsewhere. The wheel opens at the mouse: click a slice or press its number key, Tab switches wheels, Esc cancels.</p>
+        </details>
+        <details>
+          <summary>Why does macOS and Windows warn me the first time?</summary>
+          <p>Because the builds aren't code-signed yet. Notarising on macOS needs a $99/yr Apple Developer account and Windows needs a signing certificate, both of which are on the roadmap. Until then, right-click → Open on Mac and More info → Run anyway on Windows. Linux needs no signing.</p>
+        </details>
+        <details>
+          <summary>Does it work on Wayland?</summary>
+          <p>Yes, with the bundled GNOME Shell extension (GNOME 45+, so Ubuntu 23.10 and later). Wayland blocks apps from watching global input or placing their own windows, so the extension detects "dragging + Shift" from inside the Shell and tells Ryshift over D-Bus. On X11 no extension is needed. Other desktops like KDE or Sway get the drop-zone, right-click <b>Open with</b> and the CLI for now.</p>
+        </details>
+        <details>
+          <summary>Is it really free? What's the catch?</summary>
+          <p>MIT licensed, free forever, and the engine and CLI are open source too. There's no paid tier and nothing held back. If it saves you time, a star on GitHub or a bug report from your machine is what helps most.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
+  <div class="wrap">
+    <div class="cta reveal">
+      <h2>Your next conversion is one gesture away.</h2>
+      <p>Free, offline, and about 10 MB. It sits in your menu bar and only shows up when you press Shift.</p>
+      <div class="row">
+        <a class="btn" href="https://github.com/alexriderspy/ryshift/releases/latest" target="_blank" rel="noopener">Download Ryshift</a>
+        <a class="btn ghost" href="https://github.com/alexriderspy/ryshift" target="_blank" rel="noopener">Read the source</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/logo.svg" alt="" width="26" height="26" style="border-radius:7px" />
+      <span><b style="color:var(--ink)">Ryshift</b> · MIT · made by <a href="https://github.com/alexriderspy" target="_blank" rel="noopener">alexriderspy</a></span>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/alexriderspy/ryshift/releases/latest" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/alexriderspy/ryshift/issues" target="_blank" rel="noopener">Issues</a>
+      <a href="https://github.com/alexriderspy/ryshift/blob/main/docs/DEVELOPING.md" target="_blank" rel="noopener">Developers</a>
+      <a href="https://github.com/alexriderspy/ryshift/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const SVGNS = "http://www.w3.org/2000/svg";
+
+const ICONS = {
+  image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l6-6 4 4 3-3 4 4"/>',
+  doc:   '<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/>',
+  txt:   '<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/><path d="M9 13h7M9 17h7"/>',
+  crop:  '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+  compress: '<path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M10 14l-6 6"/><path d="M14 10l6-6"/>',
+  tag:   '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  sliders: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="7" cy="18" r="2.2"/>',
+  pen:   '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  frame: '<rect x="2.5" y="2.5" width="19" height="19" rx="4"/><rect x="7" y="7" width="10" height="10" rx="2"/>',
+  redact:'<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.5"/><path d="M4 20L20 4"/>',
+  sparkle:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+  share: '<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  rotate:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
+  zip:   '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M10 3v4M14 7v4M10 11v3"/>',
+};
+
+function petalPath(cx, cy, a0, a1, r0, r1, round) {
+  const ri = r0 + round, ro = r1 - round;
+  const pad = (r) => (round + 3) / r;
+  const p = (a, r) => `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
+  const b0o = a0 + pad(ro), b1o = a1 - pad(ro), b0i = a0 + pad(ri), b1i = a1 - pad(ri);
+  const large = b1o - b0o > Math.PI ? 1 : 0;
+  return `M${p(b0o, ro)}A${ro} ${ro} 0 ${large} 1 ${p(b1o, ro)}L${p(b1i, ri)}A${ri} ${ri} 0 ${large} 0 ${p(b0i, ri)}Z`;
+}
+
+function buildWheel(svg, items, hot, hubTop, hubSub, opts = {}) {
+  const C = 160, n = items.length;
+  const r0 = opts.inner ?? 54, r1 = opts.outer ?? 142, rr = opts.labelRadius ?? 98;
+  svg.innerHTML = '<defs><linearGradient id="rimG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".35" stop-color="#fff" stop-opacity=".15"/><stop offset=".7" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity=".7"/></linearGradient></defs>';
+  items.forEach(([label, icon], i) => {
+    const a0 = -Math.PI / 2 - Math.PI / n + (i * 2 * Math.PI) / n;
+    const a1 = a0 + (2 * Math.PI) / n, mid = (a0 + a1) / 2;
+    const path = document.createElementNS(SVGNS, "path");
+    path.setAttribute("d", petalPath(C, C, a0, a1, r0, r1, opts.round ?? 8));
+    path.setAttribute("class", "petal" + (i === hot ? " hot" : ""));
+    path.dataset.i = i;
+    svg.appendChild(path);
+
+    const x = C + rr * Math.cos(mid), y = C + rr * Math.sin(mid);
+    const scale = opts.iconScale ?? 0.84;
+    const g = document.createElementNS(SVGNS, "g");
+    g.setAttribute("transform", `translate(${x - 10} ${y - 20}) scale(${scale})`);
+    g.setAttribute("class", "ico" + (i === hot ? " hot" : ""));
+    g.innerHTML = ICONS[icon] || ICONS.doc;
+    svg.appendChild(g);
+
+    const t = document.createElementNS(SVGNS, "text");
+    t.setAttribute("x", x); t.setAttribute("y", y + 15); t.setAttribute("text-anchor", "middle");
+    t.setAttribute("class", "lbl" + (i === hot ? " hot" : ""));
+    t.textContent = label.toUpperCase();
+    svg.appendChild(t);
+  });
+  const hubR = opts.hubR ?? 44;
+  svg.insertAdjacentHTML("beforeend",
+    `<circle class="hub" cx="160" cy="160" r="${hubR}"/><circle class="rim" cx="160" cy="160" r="${hubR}"/><circle class="rim" cx="160" cy="160" r="${(r1 + 0.25).toFixed(2)}"/>
+     <text class="hubt" x="160" y="${hubSub ? 158 : 164}" text-anchor="middle" style="font-size:${opts.hubSize ?? 12.5}px">${hubTop}</text>` +
+    (hubSub ? `<text class="hubs" x="160" y="174" text-anchor="middle">${hubSub}</text>` : ""));
+}
+
+/* ---------- hero wheel: cycles the hot slice, and reacts to hover ---------- */
+const CONVERT = [["JPG","image"],["PNG","image"],["TXT","txt"],["WEBP","image"],["PDF","doc"],["HEIC","image"]];
+const heroSvg = document.getElementById("heroWheel");
+const stage = document.getElementById("stage");
+const result = document.getElementById("result");
+const hint = document.getElementById("hint");
+let hot = 0, autoTimer = null, paused = false;
+
+function renderHero() {
+  buildWheel(heroSvg, CONVERT, hot, "1.2 MB", "CONVERT");
+}
+renderHero();
+
+function petalHover(i) {
+  hot = i;
+  renderHero();
+  result.textContent = "Page 001." + CONVERT[i][0].toLowerCase();
+}
+
+heroSvg.addEventListener("pointermove", (e) => {
+  const t = e.target;
+  if (t.classList && t.classList.contains("petal")) {
+    paused = true;
+    clearInterval(autoTimer); autoTimer = null;
+    hint.textContent = "Drop to save Page 001." + CONVERT[+t.dataset.i][0].toLowerCase();
+    if (+t.dataset.i !== hot) petalHover(+t.dataset.i);
+  }
+});
+heroSvg.addEventListener("pointerleave", () => {
+  paused = false;
+  hint.textContent = "Hover a slice — this is the real gesture";
+  if (!autoTimer) autoTimer = setInterval(autoStep, 1500);
+});
+heroSvg.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("petal")) return;
+  stage.classList.add("done");
+  result.textContent = "Page 001." + CONVERT[+e.target.dataset.i][0].toLowerCase();
+  setTimeout(() => stage.classList.remove("done"), 1900);
+});
+
+function autoStep() {
+  if (paused) return;
+  hot = (hot + 1) % CONVERT.length;
+  renderHero();
+}
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  autoTimer = setInterval(autoStep, 1500);
+}
+
+/* ---------- the five wheels ---------- */
+const WHEELS = [
+  { key: "Shift", name: "Convert", desc: "Change the format.", items: [["JPG","image"],["PNG","image"],["PDF","doc"],["WEBP","image"],["TXT","txt"],["HEIC","image"]], hot: 0 },
+  { key: "Shift ×2", name: "Tools", desc: "Change the file itself.", items: [["Crop","crop"],["Compress","compress"],["Metadata","tag"],["Edit","sliders"],["Annotate","pen"],["Add BG","frame"]], hot: 1 },
+  { key: "Shift ×3", name: "AI", desc: "On-device smarts.", items: [["Text","txt"],["Describe","sparkle"],["Rename","tag"],["Translate","doc"],["Summarise","txt"]], hot: 0 },
+  { key: "Option / Alt", name: "Share", desc: "Send it somewhere.", items: [["AirDrop","share"],["Clipboard","doc"],["Path","tag"],["Mail","share"],["QR","frame"]], hot: 0 },
+  { key: "Option ×2", name: "Organise", desc: "Rename, zip, move, tag.", items: [["Rename","tag"],["Duplicate","doc"],["Move","folder"],["Zip","zip"],["Trash","redact"],["Finder","folder"]], hot: 3 },
+];
+
+const grid = document.getElementById("wheelsGrid");
+WHEELS.forEach((w) => {
+  const card = document.createElement("div");
+  card.className = "wcard";
+  card.innerHTML = `<svg class="mini" viewBox="0 0 320 320" aria-hidden="true"></svg>
+    <div class="k">${w.key}</div><h3>${w.name}</h3><p>${w.desc}</p>`;
+  grid.appendChild(card);
+  const svg = card.querySelector("svg");
+  buildWheel(svg, w.items, w.hot, w.name.toUpperCase(), "", { inner: 62, outer: 150, labelRadius: 104, round: 9, hubR: 52, hubSize: 11.5, iconScale: 0.8 });
+  // a soft stand-in for the frosted disk behind the mini wheel
+  svg.insertAdjacentHTML("afterbegin", '<circle cx="160" cy="160" r="146" fill="rgba(246,239,228,.9)" />');
+});
+
+/* ---------- install tabs ---------- */
+const tabs = [...document.querySelectorAll(".tab")];
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    tabs.forEach((t) => {
+      t.setAttribute("aria-selected", String(t === tab));
+      document.getElementById(t.getAttribute("aria-controls")).hidden = t !== tab;
+    });
+  });
+});
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll("[data-copy]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const text = btn.parentElement.textContent.replace(/\s*Copy\s*$/, "").trim();
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = "Copied";
+    } catch {
+      btn.textContent = "Select it";
+    }
+    setTimeout(() => (btn.textContent = "Copy"), 1400);
+  });
+});
+
+/* ---------- nav shadow + reveal ---------- */
+const nav = document.getElementById("nav");
+const onScroll = () => nav.classList.toggle("stuck", window.scrollY > 8);
+onScroll();
+window.addEventListener("scroll", onScroll, { passive: true });
+
+/* a tall section (like the FAQ) may already start above the fold and never fully intersect,
+   so reveal anything that is within a screen of the viewport */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { rootMargin: "100% 0px 100% 0px" });
+document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+/* ---------- live star count (public API, falls back to the static number) ---------- */
+fetch("https://api.github.com/repos/alexriderspy/ryshift")
+  .then((r) => (r.ok ? r.json() : null))
+  .then((d) => {
+    if (d && typeof d.stargazers_count === "number") {
+      document.getElementById("stars-link").textContent = "★ " + d.stargazers_count + " stars";
+    }
+  })
+  .catch(() => {});
+</script>
+</body>
+</html>
